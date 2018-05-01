@@ -1,0 +1,31 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>Bill Tracker</title>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="{% static 'main/lib/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'main/lib/font-awesome.min.css' %}">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
+</head>
+
+<body>
+    {% block body %} {% endblock %}
+
+    <script src="{% static 'main/lib/jquery-3.2.1.min.js' %}"></script>
+    <script src="{% static 'main/lib/popper.min.js' %}"></script>
+    <script src="{% static 'main/lib/bootstrap.min.js' %}"></script>
+    <script src="{% static 'main/js/utilities.js' %}"></script>
+
+    {% block scripts %} {% endblock %}
+</body>
+
+</html>
+

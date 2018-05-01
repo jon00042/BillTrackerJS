@@ -1,0 +1,81 @@
+{% extends 'main/base.html' %}
+
+{% block body %}
+
+<div class="container">
+    <h1 class="mt-3">Bill Tracker</a></h1>
+    <form class="form-inline mt-3" action="https://google.com" method="POST">
+        <div class="form-group mr-3">
+            <input type="text" name="desc" id="desc" class="form-control" placeholder="Description">
+        </div>
+        <div class="form-group mr-3">
+            <input type="text" name="amount" class="form-control" placeholder="Amount">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm add">Add</button>
+    </form>
+    <hr>
+    <div class="content container"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        $(".add").click(function(event) {
+            event.preventDefault();
+
+            let inputDesc = $("form > div > input[name=desc]");
+            let inputAmount = $("form > div > input[name=amount]");
+
+            if (inputDesc.val().length > 0 && inputAmount.val().length > 0 && !isNaN(inputAmount.val() + 0)) {
+                let dispDesc = createElement("div")
+                dispDesc.addClass("col-7")
+                dispDesc.attr("contenteditable", "true");
+                dispDesc.text(inputDesc.val());
+
+                dispDesc.keypress(function(event) {
+                    if (event.keyCode === 13) {
+                        event.preventDefault();
+                        $(this).blur();
+                    }
+                });
+
+                let dispAmount = createElement("div")
+                dispAmount.addClass("col-2")
+                dispAmount.attr("contenteditable", "true");
+                dispAmount.text(inputAmount.val());
+
+                dispAmount.keypress(function(event) {
+                    if (event.keyCode === 13) {
+                        event.preventDefault();
+                        if (isNaN($(this).text() + 0)) {
+                            $(this).text("0");
+                        }
+                        $(this).blur();
+                    }
+                });
+
+                let delBtn = createElement("button");
+                delBtn.addClass("btn btn-danger btn-sm delete");
+                delBtn.text("Delete");
+
+                delBtn.click(function(event) {
+                    $(this).parent().remove();
+                });
+
+                let row = createElement("div");
+                row.addClass("row mt-3");
+                row.append(dispDesc);
+                row.append(dispAmount);
+                row.append(delBtn);
+                $(".content").append(row);
+            }
+
+            inputAmount.val("");
+            inputDesc.val("");
+            inputDesc.focus();
+        });
+    });
+</script>
+{% endblock %}
+
