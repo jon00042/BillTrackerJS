@@ -27,27 +27,66 @@
         let dispDesc = $("<div></div>");
         dispDesc.addClass("col-7")
         dispDesc.attr("contenteditable", "true");
+        dispDesc.attr("orig-val", desc);
         dispDesc.text(desc);
 
         dispDesc.keypress(function(event) {
             if (event.keyCode === 13) {
                 event.preventDefault();
-                $(this).blur();
+                dispDesc.blur();
+                let newTxt = dispDesc.text().trim();
+                let origTxt = dispDesc.attr("orig-val")
+                dispDesc.text(origTxt);
+                if (newTxt.length > 0) {
+                    $(".fa").toggleClass("hide");
+                    $.ajax({
+                        beforeSend: setCsrfToken,
+                        type: "POST",
+                        url: $("form").attr("action"),
+                        data: { "action": "edit", "desc": newTxt, "entry_id": entry_id },
+                        success: function (response) {
+                            $(".fa").toggleClass("hide");
+                            dispDesc.text(newTxt);
+                        },
+                        error: function (response) {
+                            $(".fa").toggleClass("hide");
+                            console.log(response)
+                        },
+                    });
+                }
             }
         });
 
         let dispAmount = $("<div></div>");
         dispAmount.addClass("col-2")
         dispAmount.attr("contenteditable", "true");
+        dispAmount.attr("orig-val", amount);
         dispAmount.text(amount);
 
         dispAmount.keypress(function(event) {
             if (event.keyCode === 13) {
                 event.preventDefault();
-                if (isNaN($(this).text() + 0)) {
-                    $(this).text("0");
+                dispAmount.blur();
+                let newTxt = dispAmount.text().trim();
+                let origTxt = dispAmount.attr("orig-val")
+                dispAmount.text(origTxt);
+                if (newTxt.length > 0 && !isNaN(newTxt + 0)) {
+                    $(".fa").toggleClass("hide");
+                    $.ajax({
+                        beforeSend: setCsrfToken,
+                        type: "POST",
+                        url: $("form").attr("action"),
+                        data: { "action": "edit", "amount": newTxt, "entry_id": entry_id },
+                        success: function (response) {
+                            $(".fa").toggleClass("hide");
+                            dispAmount.text(newTxt);
+                        },
+                        error: function (response) {
+                            $(".fa").toggleClass("hide");
+                            console.log(response)
+                        },
+                    });
                 }
-                $(this).blur();
             }
         });
 
@@ -55,9 +94,23 @@
         delBtn.addClass("btn btn-danger btn-sm delete");
         delBtn.text("Delete");
 
-        // delBtn.click(function(event) {
-        //     $(this).parent().remove();
-        // });
+        delBtn.click(function(event) {
+            $(".fa").toggleClass("hide");
+            $.ajax({
+                beforeSend: setCsrfToken,
+                type: "POST",
+                url: $("form").attr("action"),
+                data: { "action": "delete", "entry_id": entry_id },
+                success: function (response) {
+                    $(".fa").toggleClass("hide");
+                    delBtn.parent().remove();
+                },
+                error: function (response) {
+                    $(".fa").toggleClass("hide");
+                    console.log(response)
+                },
+            });
+        });
 
         let row = $("<div></div>");
         row.addClass("row mt-3");
@@ -81,14 +134,15 @@
     $(document).ready(function() {
         $(".add").click(function(event) {
             event.preventDefault();
-            $(".fa").toggleClass("hide");
             let descInput = $("input[name=desc]");
             let descTxt = descInput.val().trim();
             descInput.val("")
             let amountInput = $("input[name=amount]");
             amountTxt = amountInput.val().trim();
             amountInput.val("");
+            descInput.focus();
             if (descTxt.length > 0 && amountTxt.length > 0 && !isNaN(amountTxt + 0)) {
+                $(".fa").toggleClass("hide");
                 $.ajax({
                     beforeSend: setCsrfToken,
                     type: "POST",

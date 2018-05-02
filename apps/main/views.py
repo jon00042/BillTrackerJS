@@ -103,22 +103,40 @@ def data_ajax(request):
     user = get_logged_in_user(request)
     if (not user):
         return JsonResponse({ 'errors': [ 'Not authenticated!' ] }, status=400)
-    if ('action' not in request.POST):
-        return JsonResponse({ 'errors': [ 'Bad data_ajax request!' ] }, status=400)
-    if (request.POST['action'] == 'read'):
-        try:
-            entries = m.Entry.objects.filter(user_id=user.id)
-            entries_as_json = json.loads(serializers.serialize('json', entries))
-            return JsonResponse({ 'entries': entries_as_json })
-        except Exception as ex:
-            return JsonResponse({ 'errors': [ ex ] }, status=400)
-    if (request.POST['action'] == 'add'):
-        if ('desc' not in request.POST or 'amount' not in request.POST):
-            return JsonResponse({ 'errors': [ 'Bad data_ajax request!' ] }, status=400)
-        try:
-            entry = m.Entry.objects.create(desc=request.POST['desc'], amount=request.POST['amount'], user_id=user.id)
-            return JsonResponse({ 'entry_id': entry.id })
-        except Exception as ex:
-            return JsonResponse({ 'errors': [ ex ] }, status=400)
+    if ('action' in request.POST):
+        if (request.POST['action'] == 'read'):
+            try:
+                entries = m.Entry.objects.filter(user_id=user.id)
+                entries_as_json = json.loads(serializers.serialize('json', entries))
+                return JsonResponse({ 'entries': entries_as_json })
+            except Exception as ex:
+                return JsonResponse({ 'errors': [ ex ] }, status=400)
+        elif (request.POST['action'] == 'add'):
+            if ('desc' in request.POST and 'amount' in request.POST):
+                try:
+                    entry = m.Entry.objects.create(desc=request.POST['desc'], amount=request.POST['amount'], user_id=user.id)
+                    return JsonResponse({ 'entry_id': entry.id })
+                except Exception as ex:
+                    return JsonResponse({ 'errors': [ ex ] }, status=400)
+        elif (request.POST['action'] == 'edit'):
+            if ('entry_id' in request.POST):
+                try:
+                    entry = m.Entry.objects.get(id=request.POST['entry_id'])
+                    if ('desc' in request.POST):
+                        entry.desc = request.POST['desc']
+                    if ('amount' in request.POST):
+                        entry.amount = request.POST['amount']
+                    entry.save()
+                    return JsonResponse({})  # success is good enough
+                except Exception as ex:
+                    return JsonResponse({ 'errors': [ ex ] }, status=400)
+        elif (request.POST['action'] == 'delete'):
+            if ('entry_id' in request.POST):
+                try:
+                    entry = m.Entry.objects.get(id=request.POST['entry_id'])
+                    entry.delete()
+                    return JsonResponse({})  # success is good enough
+                except Exception as ex:
+                    return JsonResponse({ 'errors': [ ex ] }, status=400)
     return JsonResponse({ 'errors': [ 'Bad data_ajax request!' ] }, status=400)
 
