@@ -7,7 +7,6 @@ from django.contrib import messages
 from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from pprint import pprint
 
 def get_logged_in_user(request):
     if ('user_id' not in request.session):
@@ -18,6 +17,7 @@ def get_logged_in_user(request):
         pass
     except Exception as ex:
         print(ex)
+    request.session.clear()
     return None
 
 def index(request):
@@ -110,14 +110,16 @@ def data_ajax(request):
                 entries_as_json = json.loads(serializers.serialize('json', entries))
                 return JsonResponse({ 'entries': entries_as_json })
             except Exception as ex:
-                return JsonResponse({ 'errors': [ ex ] }, status=400)
+                print('{}: {}'.format(type(ex), ex))
+                return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
         elif (request.POST['action'] == 'add'):
             if ('desc' in request.POST and 'amount' in request.POST):
                 try:
                     entry = m.Entry.objects.create(desc=request.POST['desc'], amount=request.POST['amount'], user_id=user.id)
                     return JsonResponse({ 'entry_id': entry.id })
                 except Exception as ex:
-                    return JsonResponse({ 'errors': [ ex ] }, status=400)
+                    print('{}: {}'.format(type(ex), ex))
+                    return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
         elif (request.POST['action'] == 'edit'):
             if ('entry_id' in request.POST):
                 try:
@@ -129,7 +131,8 @@ def data_ajax(request):
                     entry.save()
                     return JsonResponse({})  # success is good enough
                 except Exception as ex:
-                    return JsonResponse({ 'errors': [ ex ] }, status=400)
+                    print('{}: {}'.format(type(ex), ex))
+                    return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
         elif (request.POST['action'] == 'delete'):
             if ('entry_id' in request.POST):
                 try:
@@ -137,6 +140,7 @@ def data_ajax(request):
                     entry.delete()
                     return JsonResponse({})  # success is good enough
                 except Exception as ex:
-                    return JsonResponse({ 'errors': [ ex ] }, status=400)
+                    print('{}: {}'.format(type(ex), ex))
+                    return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
     return JsonResponse({ 'errors': [ 'Bad data_ajax request!' ] }, status=400)
 

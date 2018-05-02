@@ -41,7 +41,6 @@ $(document).ready(function() {
         }
 
         $(".fa").toggleClass("hide")
-
         $.ajax({
             beforeSend: setCsrfToken,
             type: "POST",
@@ -55,8 +54,8 @@ $(document).ready(function() {
                 window.location = response.url;
             },
             error: function (response) {
-                displayErrors($(".messages"), response.responseJSON.errors);
                 $(".fa").toggleClass("hide");
+                displayErrors($(".messages"), response.responseJSON.errors);
             },
         });
     });
