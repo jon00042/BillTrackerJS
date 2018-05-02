@@ -3,7 +3,7 @@
 {% block body %}
 <div class="card my-4 col-6 offset-3 p-5">
     <h3 class="text-center">Register</h3>
-    <form method="POST" action="{% url 'main:authenticate_ajax' auth_for='register' %}" id="register-form">
+    <form action="{% url 'main:authenticate_ajax' auth_for='register' %}" method="POST" id="register-form">
         <div class="form-group">
             <label for="inputEmail1">Email Address</label>
             <input type="email" class="form-control" id="inputEmail1" aria-describedby="emailHelp" placeholder="Enter Email Address" name="email">
@@ -61,6 +61,8 @@ $(document).ready(function() {
             return;
         }
 
+        $(".fa").toggleClass("hide");
+
         $.ajax({
             beforeSend: setCsrfToken,
             type: "POST",
@@ -71,10 +73,12 @@ $(document).ready(function() {
                 "sha_pwd": shaPwd(passwordTxt),
             },
             success: function (response) {
+                $(".fa").toggleClass("hide")
                 window.location = response.url;
             },
             error: function (response) {
                 displayErrors($(".messages"), response.responseJSON.errors);
+                $(".fa").toggleClass("hide");
             },
         });
     });

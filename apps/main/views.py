@@ -1,8 +1,10 @@
 import apps.main.models as m
 import bcrypt
 import django
+import json
 
 from django.contrib import messages
+from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from pprint import pprint
@@ -39,11 +41,9 @@ def logout(request):
 
 def authenticate_ajax(request, auth_for):
     if (request.method != 'POST'):
-        return JsonResponse({ 'message': request.method + ' not permitted!' }, status=400)
+        return JsonResponse({ 'errors': [ request.method + ' not permitted!' ] }, status=400)
     if (get_logged_in_user(request)):
-        return JsonResponse({ 'message': 'User already logged in!' }, status=400)
-    success = False
-    user = None
+        return JsonResponse({ 'errors': [ 'User already logged in!' ] }, status=400)
     if (auth_for == 'register' and register_user(request)):
         return JsonResponse({ 'url': redirect('main:login').url })
     elif (auth_for == 'login' and login_user(request)):
@@ -97,6 +97,28 @@ def login_user(request):
         messages.error(request, 'internal server error: contact support!')
     return False
 
-def data(request):
-    return None
+def data_ajax(request):
+    if (request.method != 'POST'):
+        return JsonResponse({ 'errors': [ request.method + ' not permitted!' ] }, status=400)
+    user = get_logged_in_user(request)
+    if (not user):
+        return JsonResponse({ 'errors': [ 'Not authenticated!' ] }, status=400)
+    if ('action' not in request.POST):
+        return JsonResponse({ 'errors': [ 'Bad data_ajax request!' ] }, status=400)
+    if (request.POST['action'] == 'read'):
+        try:
+            entries = m.Entry.objects.filter(user_id=user.id)
+            entries_as_json = json.loads(serializers.serialize('json', entries))
+            return JsonResponse({ 'entries': entries_as_json })
+        except Exception as ex:
+            return JsonResponse({ 'errors': [ ex ] }, status=400)
+    if (request.POST['action'] == 'add'):
+        if ('desc' not in request.POST or 'amount' not in request.POST):
+            return JsonResponse({ 'errors': [ 'Bad data_ajax request!' ] }, status=400)
+        try:
+            entry = m.Entry.objects.create(desc=request.POST['desc'], amount=request.POST['amount'], user_id=user.id)
+            return JsonResponse({ 'entry_id': entry.id })
+        except Exception as ex:
+            return JsonResponse({ 'errors': [ ex ] }, status=400)
+    return JsonResponse({ 'errors': [ 'Bad data_ajax request!' ] }, status=400)
 

@@ -1,4 +1,8 @@
 
+.debug, .debug * {
+    border: 1px dotted red;
+}
+
 #desc {
     width: 400px;
 }
@@ -11,10 +15,4 @@
 .hide {
     display: none;
 }
-
-/* .results {
-    overflow: scroll;
-    height: calc(100vh - 130px);
-    border: 1px solid #eee;
-} */
 
