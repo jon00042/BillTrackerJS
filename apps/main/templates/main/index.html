@@ -23,13 +23,30 @@
 
 {% block scripts %}
 <script>
+    function doAjax(url, data, fnSuccess) {
+        $(".fa").toggleClass("hide");
+        $.ajax({
+            beforeSend: setCsrfToken,
+            type: "POST",
+            url: url,
+            data: data,
+            success: function (response) {
+                $(".fa").toggleClass("hide");
+                fnSuccess(response);
+            },
+            error: function (response) {
+                $(".fa").toggleClass("hide");
+                console.log(response)
+            },
+        });
+    }
+
     function displayEntry(entry_id, desc, amount) {
         let dispDesc = $("<div></div>");
         dispDesc.addClass("col-7")
         dispDesc.attr("contenteditable", "true");
         dispDesc.attr("orig-val", desc);
         dispDesc.text(desc);
-
         dispDesc.keypress(function(event) {
             if (event.keyCode === 13) {
                 event.preventDefault();
@@ -38,21 +55,9 @@
                 let origTxt = dispDesc.attr("orig-val")
                 dispDesc.text(origTxt);
                 if (newTxt.length > 0) {
-                    $(".fa").toggleClass("hide");
-                    $.ajax({
-                        beforeSend: setCsrfToken,
-                        type: "POST",
-                        url: $("form").attr("action"),
-                        data: { "action": "edit", "desc": newTxt, "entry_id": entry_id },
-                        success: function (response) {
-                            $(".fa").toggleClass("hide");
-                            dispDesc.text(newTxt);
-                        },
-                        error: function (response) {
-                            $(".fa").toggleClass("hide");
-                            console.log(response)
-                        },
-                    });
+                    doAjax($("form").attr("action"),
+                            { "action": "edit", "desc": newTxt, "entry_id": entry_id },
+                            function(response) { dispDesc.text(newTxt); });
                 }
             }
         });
@@ -62,7 +67,6 @@
         dispAmount.attr("contenteditable", "true");
         dispAmount.attr("orig-val", amount);
         dispAmount.text(amount);
-
         dispAmount.keypress(function(event) {
             if (event.keyCode === 13) {
                 event.preventDefault();
@@ -71,21 +75,9 @@
                 let origTxt = dispAmount.attr("orig-val")
                 dispAmount.text(origTxt);
                 if (newTxt.length > 0 && !isNaN(newTxt + 0)) {
-                    $(".fa").toggleClass("hide");
-                    $.ajax({
-                        beforeSend: setCsrfToken,
-                        type: "POST",
-                        url: $("form").attr("action"),
-                        data: { "action": "edit", "amount": newTxt, "entry_id": entry_id },
-                        success: function (response) {
-                            $(".fa").toggleClass("hide");
-                            dispAmount.text(newTxt);
-                        },
-                        error: function (response) {
-                            $(".fa").toggleClass("hide");
-                            console.log(response)
-                        },
-                    });
+                    doAjax($("form").attr("action"),
+                            { "action": "edit", "amount": newTxt, "entry_id": entry_id },
+                            function(response) { dispAmount.text(newTxt); });
                 }
             }
         });
@@ -93,23 +85,10 @@
         let delBtn = $("<button></button>");
         delBtn.addClass("btn btn-danger btn-sm delete");
         delBtn.text("Delete");
-
         delBtn.click(function(event) {
-            $(".fa").toggleClass("hide");
-            $.ajax({
-                beforeSend: setCsrfToken,
-                type: "POST",
-                url: $("form").attr("action"),
-                data: { "action": "delete", "entry_id": entry_id },
-                success: function (response) {
-                    $(".fa").toggleClass("hide");
-                    delBtn.parent().remove();
-                },
-                error: function (response) {
-                    $(".fa").toggleClass("hide");
-                    console.log(response)
-                },
-            });
+            doAjax($("form").attr("action"),
+                    { "action": "delete", "entry_id": entry_id },
+                    function(response) { delBtn.parent().remove(); });
         });
 
         let row = $("<div></div>");
@@ -121,60 +100,44 @@
         $(".content").append(row);
     }
 
-    function onReadDone(data) {
-        if (('entries' in data) && Array.isArray(data.entries)) {
-            for (let i = 0; i < data.entries.length; ++i) {
-                entry = data.entries[i]
-                if (('pk' in entry) && ('fields' in entry) && ('desc' in entry.fields) && ('amount' in entry.fields))
-                    displayEntry(entry.pk, entry.fields.desc, entry.fields.amount);
-            }
-        }
-    }
-
     $(document).ready(function() {
         $(".add").click(function(event) {
             event.preventDefault();
+
             let descInput = $("input[name=desc]");
             let descTxt = descInput.val().trim();
             descInput.val("")
+
             let amountInput = $("input[name=amount]");
             amountTxt = amountInput.val().trim();
             amountInput.val("");
+
             descInput.focus();
+
             if (descTxt.length > 0 && amountTxt.length > 0 && !isNaN(amountTxt + 0)) {
-                $(".fa").toggleClass("hide");
-                $.ajax({
-                    beforeSend: setCsrfToken,
-                    type: "POST",
-                    url: $("form").attr("action"),
-                    data: { "action": "add", "desc": descTxt, "amount": amountTxt },
-                    success: function (response) {
-                        $(".fa").toggleClass("hide");
-                        displayEntry(response.entry_id, descTxt, amountTxt);
-                    },
-                    error: function (response) {
-                        $(".fa").toggleClass("hide");
-                        console.log(response)
-                    },
-                });
+                doAjax($("form").attr("action"),
+                        { "action": "add", "desc": descTxt, "amount": amountTxt },
+                        function(response) {
+                            if ('entry_id' in response) {
+                                displayEntry(response.entry_id, descTxt, amountTxt);
+                            }
+                        });
             }
         });
 
-        $(".fa").toggleClass("hide");
-        $.ajax({
-            beforeSend: setCsrfToken,
-            type: "POST",
-            url: $("form").attr("action"),
-            data: { "action": "read" },
-            success: function (response) {
-                $(".fa").toggleClass("hide");
-                onReadDone(response)
-            },
-            error: function (response) {
-                $(".fa").toggleClass("hide");
-                console.log(response)
-            },
-        });
+        doAjax($("form").attr("action"),
+                { "action": "read" },
+                function(response) {
+                    if ('entries' in response && Array.isArray(response.entries)) {
+                        for (let i = 0; i < response.entries.length; ++i) {
+                            entry = response.entries[i];
+                            if ('pk' in entry && 'fields' in entry &&
+                                'desc' in entry.fields && 'amount' in entry.fields) {
+                                    displayEntry(entry.pk, entry.fields.desc, entry.fields.amount);
+                            }
+                        }
+                    }
+                });
     });
 </script>
 {% endblock %}
