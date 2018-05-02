@@ -1,0 +1,62 @@
+{% extends 'main/base.html' %}
+
+{% block body %}
+<div class="card my-4 col-6 offset-3 p-5">
+    <h3 class="text-center">Login</h3>
+    <form method="POST" action="{% url 'main:authenticate_ajax' auth_for='login' %}" id="login-form">
+        <div class="form-group">
+            <label for="inputEmail1">Email Address</label>
+            <input type="email" class="form-control" id="inputEmail1" aria-describedby="emailHelp" placeholder="Enter Email Address" name="email">
+        </div>
+        <div class="form-group">
+            <label for="inputPassword1">Password</label>
+            <input type="password" class="form-control" id="inputPassword1" placeholder="Create Password" name="password">
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+        <i class="fa fa-spinner ml-3 fa-spin hide" id="spinner"></i>
+    </form>
+    <a class="mt-3" href="{% url 'main:register' %}">No Account? Register here</a>
+    <div class="my-3 messages"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $("button").click(function(event) {
+        event.preventDefault();
+        $(".messages").children().remove();
+
+        let emailInput = $("input[name=email]");
+        let emailTxt = emailInput.val().trim();
+        emailInput.val("");
+
+        let passwordInput = $("input[name=password]");
+        let passwordTxt = passwordInput.val().trim();
+        passwordInput.val("");
+
+        if (emailTxt.length < 1 || passwordTxt.length < 1) {
+            displayErrors($(".messages"), [ "input fields cannot be empty!" ]);
+            return;
+        }
+
+        $.ajax({
+            beforeSend: setCsrfToken,
+            type: "POST",
+            url: $("form").attr("action"),
+            data: {
+                "email": emailTxt,
+                "sha_pwd": shaPwd(passwordTxt),
+            },
+            success: function (response) {
+                window.location = response.url;
+            },
+            error: function (response) {
+                displayErrors($(".messages"), response.responseJSON.errors);
+            },
+        });
+    });
+});
+</script>
+{% endblock %}
+
