@@ -51,6 +51,8 @@ $(document).ready(function() {
         let confirmTxt = confirmInput.val().trim();
         confirmInput.val("");
 
+        emailInput.focus();
+
         if (emailTxt.length < 1 || fullnameTxt.length < 1 || passwordTxt.length < 1) {
             displayErrors($(".messages"), [ "input fields cannot be empty!" ]);
             return;

@@ -44,16 +44,20 @@ def authenticate_ajax(request, auth_for):
         return JsonResponse({ 'errors': [ request.method + ' not permitted!' ] }, status=400)
     if (get_logged_in_user(request)):
         return JsonResponse({ 'errors': [ 'User already logged in!' ] }, status=400)
-    if (auth_for == 'register' and register_user(request)):
-        return JsonResponse({ 'url': redirect('main:login').url })
-    elif (auth_for == 'login' and login_user(request)):
-        return JsonResponse({ 'url': redirect('main:index').url })
+    if (auth_for == 'register'):
+        if (register_user(request)):
+            return JsonResponse({ 'url': redirect('main:login').url })
+    elif (auth_for == 'login'):
+        if (login_user(request)):
+            return JsonResponse({ 'url': redirect('main:index').url })
+    else:
+        messages.error('Bad auth ajax request!')
     errors = []
     for message in messages.get_messages(request):
         errors.append(str(message))
     return JsonResponse({ 'errors': errors }, status=400)
 
-def check_ajax_fields(request, fields):
+def check_fields(request, fields):
     for field in fields:
         if (field in request.POST):
             if (len(request.POST[field]) < 1):
@@ -63,10 +67,11 @@ def check_ajax_fields(request, fields):
     return len(messages.get_messages(request)) == 0
 
 def register_user(request):
-    if (not check_ajax_fields(request, ['email', 'fullname', 'sha_pwd'])):
+    if (not check_fields(request, ['email', 'fullname', 'sha_pwd'])):
         return False
     sha_pwd_bytes = request.POST['sha_pwd'].encode('utf-8')
-    encrypted_pwd_str = bcrypt.hashpw(sha_pwd_bytes, bcrypt.gensalt()).decode('utf-8')
+    encrypted_pwd_bytes = bcrypt.hashpw(sha_pwd_bytes, bcrypt.gensalt())
+    encrypted_pwd_str = encrypted_pwd_bytes.decode('utf-8')
     try:
         m.User.objects.create(email=request.POST['email'], fullname=request.POST['fullname'], encrypted_pwd=encrypted_pwd_str)
         return True
@@ -78,7 +83,7 @@ def register_user(request):
     return False
 
 def login_user(request):
-    if (not check_ajax_fields(request, ['email', 'sha_pwd'])):
+    if (not check_fields(request, ['email', 'sha_pwd'])):
         return False
     sha_pwd_bytes = request.POST['sha_pwd'].encode('utf-8')
     try:
@@ -113,34 +118,34 @@ def data_ajax(request):
                 print('{}: {}'.format(type(ex), ex))
                 return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
         elif (request.POST['action'] == 'add'):
-            if ('desc' in request.POST and 'amount' in request.POST):
-                try:
-                    entry = m.Entry.objects.create(desc=request.POST['desc'], amount=request.POST['amount'], user_id=user.id)
-                    return JsonResponse({ 'entry_id': entry.id })
-                except Exception as ex:
-                    print('{}: {}'.format(type(ex), ex))
-                    return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
+            # assume 'desc' & 'amount' present, as exception will occur (and log) anyway
+            try:
+                entry = m.Entry.objects.create(desc=request.POST['desc'], amount=request.POST['amount'], user_id=user.id)
+                return JsonResponse({ 'entry_id': entry.id })
+            except Exception as ex:
+                print('{}: {}'.format(type(ex), ex))
+                return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
         elif (request.POST['action'] == 'edit'):
-            if ('entry_id' in request.POST):
-                try:
-                    entry = m.Entry.objects.get(id=request.POST['entry_id'])
-                    if ('desc' in request.POST):
-                        entry.desc = request.POST['desc']
-                    if ('amount' in request.POST):
-                        entry.amount = request.POST['amount']
-                    entry.save()
-                    return JsonResponse({})  # success is good enough
-                except Exception as ex:
-                    print('{}: {}'.format(type(ex), ex))
-                    return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
+            # assume 'entry_id' present, as exception will occur (and log) anyway
+            try:
+                entry = m.Entry.objects.get(id=request.POST['entry_id'])
+                if ('desc' in request.POST):
+                    entry.desc = request.POST['desc']
+                if ('amount' in request.POST):
+                    entry.amount = request.POST['amount']
+                entry.save()
+                return JsonResponse({})  # success is good enough
+            except Exception as ex:
+                print('{}: {}'.format(type(ex), ex))
+                return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
         elif (request.POST['action'] == 'delete'):
-            if ('entry_id' in request.POST):
-                try:
-                    entry = m.Entry.objects.get(id=request.POST['entry_id'])
-                    entry.delete()
-                    return JsonResponse({})  # success is good enough
-                except Exception as ex:
-                    print('{}: {}'.format(type(ex), ex))
-                    return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
+            # assume 'entry_id' present, as exception will occur (and log) anyway
+            try:
+                entry = m.Entry.objects.get(id=request.POST['entry_id'])
+                entry.delete()
+                return JsonResponse({})  # success is good enough
+            except Exception as ex:
+                print('{}: {}'.format(type(ex), ex))
+                return JsonResponse({ 'errors': [ 'internal server error: contact support!' ] }, status=400)
     return JsonResponse({ 'errors': [ 'Bad data_ajax request!' ] }, status=400)
 
