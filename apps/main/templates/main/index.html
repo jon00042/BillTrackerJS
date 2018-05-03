@@ -47,18 +47,24 @@
         dispDesc.attr("contenteditable", "true");
         dispDesc.attr("orig-val", desc);
         dispDesc.text(desc);
-        dispDesc.keypress(function(event) {
-            if (event.keyCode === 13) {
+        dispDesc.keydown(function(event) {
+            if (event.keyCode === 13 || event.keyCode == 27) {
                 event.preventDefault();
-                dispDesc.blur();
-                let newTxt = dispDesc.text().trim();
-                let origTxt = dispDesc.attr("orig-val")
-                dispDesc.text(origTxt);
-                if (newTxt.length > 0) {
-                    doAjax($("form").attr("action"),
-                            { "action": "edit", "desc": newTxt, "entry_id": entry_id },
-                            function(response) { dispDesc.text(newTxt); });
+                if (event.keyCode == 27) {
+                    dispDesc.attr("cancel", "true");
                 }
+                dispDesc.blur();
+                dispDesc.attr("cancel", "");
+            }
+        });
+        dispDesc.blur(function(event) {
+            let newTxt = dispDesc.text().trim();
+            let origTxt = dispDesc.attr("orig-val")
+            dispDesc.text(origTxt);
+            if (!dispDesc.attr("cancel") && newTxt.length > 0) {
+                doAjax($("form").attr("action"),
+                        { "action": "edit", "desc": newTxt, "entry_id": entry_id },
+                        function(response) { dispDesc.text(newTxt); dispDesc.attr("orig-val", newTxt); });
             }
         });
 
@@ -67,18 +73,24 @@
         dispAmount.attr("contenteditable", "true");
         dispAmount.attr("orig-val", amount);
         dispAmount.text(amount);
-        dispAmount.keypress(function(event) {
-            if (event.keyCode === 13) {
+        dispAmount.keydown(function(event) {
+            if (event.keyCode === 13 || event.keyCode == 27) {
                 event.preventDefault();
-                dispAmount.blur();
-                let newTxt = dispAmount.text().trim();
-                let origTxt = dispAmount.attr("orig-val")
-                dispAmount.text(origTxt);
-                if (newTxt.length > 0 && !isNaN(newTxt + 0)) {
-                    doAjax($("form").attr("action"),
-                            { "action": "edit", "amount": newTxt, "entry_id": entry_id },
-                            function(response) { dispAmount.text(newTxt); });
+                if (event.keyCode == 27) {
+                    dispAmount.attr("cancel", "true")
                 }
+                dispAmount.blur();
+                dispAmount.attr("cancel", "")
+            }
+        });
+        dispAmount.blur(function(event) {
+            let newTxt = dispAmount.text().trim();
+            let origTxt = dispAmount.attr("orig-val")
+            dispAmount.text(origTxt);
+            if (!dispAmount.attr("cancel") && newTxt.length > 0 && !isNaN(newTxt + 0)) {
+                doAjax($("form").attr("action"),
+                        { "action": "edit", "amount": newTxt, "entry_id": entry_id },
+                        function(response) { dispAmount.text(newTxt); dispAmount.attr("orig-val", newTxt); });
             }
         });
 
